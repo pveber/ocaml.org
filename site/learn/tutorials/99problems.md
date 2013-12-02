@@ -222,26 +222,30 @@ elements with duplicates are transferred as (N E) lists.
 Since OCaml lists are homogeneous, one needs to define a type to hold
 both single elements and sub-lists.
 
-```ocamltop
-type 'a rle =
-  | One of 'a
-  | Many of int * 'a;;
-```
+> ```ocamltop
+> type 'a rle =
+>   | One of 'a
+>   | Many of (int * 'a);;
+> ```
 
 SOLUTION
 
 > ```ocamltop
-> let encode l =
->   let create_tuple cnt elem =
->     if cnt = 1 then One elem
->     else Many (cnt, elem) in
->   let rec aux count acc = function
+> let pack list =
+>   let rec aux current acc = function
+>     | [] -> [] (* Can only be reached if original list is empty *)
+>     | [x] -> (x :: current) :: acc
+>     | a :: (b :: _ as t) -> if a = b then aux (a :: current) acc t
+>                             else aux [] ((a :: current) :: acc) t  in
+>   List.rev (aux [] [] list)
+>
+> let encode list =
+>   let rec aux = function
 >     | [] -> []
->     | [x] -> (create_tuple (count+1) x) :: acc
->     | hd :: (snd :: _ as tl) ->
->         if hd = snd then aux (count + 1) acc tl
->         else aux 0 ((create_tuple (count + 1) hd) :: acc) tl in
->     List.rev (aux 0 [] l)
+>     | [] :: t -> aux t
+>     | [x] :: t -> One x :: aux t
+>     | (x :: l) :: t -> Many (1 + List.length l , x) :: aux t  in
+>   aux (pack list)
 > ```
 
 ```ocamltop
@@ -274,8 +278,8 @@ SOLUTION
 
 Implement the so-called run-length encoding data compression method
 directly. I.e. don't explicitly create the sublists containing the
-duplicates, as in problem "[Pack consecutive duplicates of list elements into sublists](#Packconsecutiveduplicatesoflistelementsintosublistsmedium)", but only count them. As in problem 
-"[Modified run-length encoding](#Modifiedrunlengthencodingeasy)", simplify the result list by replacing the singleton lists (1 X) by X.
+duplicates, as in problem "[Pack consecutive duplicates of list elements into sublists](#pack)", but only count them. As in problem 
+"[Modified run-length encoding](#modif-run-length)", simplify the result list by replacing the singleton lists (1 X) by X.
 
 SOLUTION
 
@@ -1307,19 +1311,39 @@ difficult. Try to find a recursive statement and turn it into a function
 `minNodes` defined as follows: `minNodes h` returns the minimum number
 of nodes in a height-balanced binary tree of height `h`.
 
-<!--SOLUTION-->
+SOLUTION
 
-```ocaml
-  (* solution pending *)
-```
+> ```ocamltop
+> let rec minNodes n =
+>   if n <= 0 then 0 
+>   else if n = 1 then 1
+>   else minNodes (n - 1) + minNodes (n - 2) + 1
+> ```
 
 On the other hand, we might ask: what is the maximum height H a
 height-balanced binary tree with N nodes can have? `maxHeight n` returns
 the maximum height of a height-balanced binary tree with `n` nodes.
 
+SOLUTION
+
+> ```ocamltop
+> let rec maxHeight = function
+>   | 0 -> 0 
+>   | n ->
+>     let h = maxHeight (n - 1) in
+>     if maxHeight (n - minNodes (h - 1) - 1) = h then h + 1 else h
+> ```
+
 Now, we can attack the main problem: construct all the height-balanced
 binary trees with a given nuber of nodes. `hbal_tree_nodes n` returns a
 list of all height-balanced binary tree with `n` nodes.
+
+SOLUTION
+
+> ```ocamltop
+>
+> 
+> ```
 
 Find out how many height-balanced trees exist for `n = 15`.
 
